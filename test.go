@@ -45,6 +45,8 @@ func Parser(s []string) []string {
 }
 
 func Hex(s string) string {
+	s = strings.ReplaceAll(s, "0x", "")
+	s = strings.ReplaceAll(s, "0X", "")
 	content, err := strconv.ParseInt(s, 16, 64)
 	if err != nil {
 		panic(err)
@@ -62,7 +64,6 @@ func Bin(s string) string {
 	content, err := strconv.ParseInt(s, 2, 64)
 	if err != nil {
 		fmt.Println(err)
-		panic(err)
 		return strconv.Itoa(int(content))
 	}
 	fmt.Printf("Output %d", content)
