@@ -67,3 +67,12 @@ func Hex(s string) string {
 	return strconv.Itoa(int(content))
 }
 
+/*content, err := os.ReadFile("sample.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// convert to []string
+	s := strings.Fields(string(content))
+	fmt.Println("original string: ", s)
+	fmt.Println(Parser(s))
+	// Output: [a b]*/
