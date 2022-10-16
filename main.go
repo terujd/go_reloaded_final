@@ -4,19 +4,32 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 func main() {
+	args := os.Args[1:]
+	if len(args) == 2 {
 
-	s, err := os.ReadFile(os.Args[1])
-	// error handling ----------------
-	if err != nil {
-		log.Panic(err)
+		input := args[0]
+		//output args[1]
+		// read input files
+		content, err := os.ReadFile(input)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		a := Parser(content)
+		b := separate(a)
+		c := finalizeParser(b)
+
+		//write string to output file args[1]
+		os.WriteFile(args[1], []byte(c), 0644)
+	} else {
+		log.Fatal("Enter input and output file")
 	}
-	// print the output of the parser function with the contents of the sample text
-	fmt.Println(Parser(s))
 }
 
 // functions for the main function ---------------------------------------------------
@@ -43,15 +56,15 @@ func Parser(s []byte) []string {
 
 		case strings.Contains(listOfWords[i], "(up)"):
 			i--
-			fmt.Println(strings.ToUpper(listOfWords[i]))
+			results = append(results, strings.ToUpper(listOfWords[i]))
 
 		case strings.Contains(listOfWords[i], "(low)"):
 			i--
-			fmt.Println(strings.ToLower(listOfWords[i]))
+			results = append(results, strings.ToLower(listOfWords[i]))
 
 		case strings.Contains(listOfWords[i], "(cap)"):
 			i--
-			fmt.Println(strings.Title(listOfWords[i]))
+			results = append(results, strings.Title(listOfWords[i]))
 
 		// now we want to check for the cases where theres a number and a modifier example "(low, 3)"
 		// because we are moving backwards in the list we need to check for the modifier first
@@ -119,6 +132,73 @@ func Parser(s []byte) []string {
 		results[i], results[j] = results[j], results[i]
 	}
 	return results
+}
+
+func separate(s []string) []string {
+
+	temp1 := strings.Join(s, " ")
+
+	for _, e := range temp1 {
+		switch {
+		case e == ',':
+			temp1 = strings.Replace(temp1, ",", ", ", -1)
+		case e == '.':
+			temp1 = strings.Replace(temp1, ".", ". ", -1)
+		case e == '!':
+			temp1 = strings.Replace(temp1, "!", "! ", -1)
+		case e == '?':
+			temp1 = strings.Replace(temp1, "?", "? ", -1)
+		case e == ';':
+			temp1 = strings.Replace(temp1, ";", "; ", -1)
+		case e == ':':
+			temp1 = strings.Replace(temp1, ":", ": ", -1)
+		case e == '\'':
+			temp1 = strings.Replace(temp1, "'", " ' ", -1)
+		}
+	}
+	trimWhite := regexp.MustCompile(`\s+`)
+	temp1 = trimWhite.ReplaceAllString(temp1, " ")
+	return strings.Split(temp1, " ")
+}
+
+func finalizeParser(results []string) string {
+	var temp []string
+	apostrophecount := 0
+	for i := range results {
+
+		switch {
+		// if e == a and the next word starts with a vowel then add "n" to the end of the word
+		case results[i] == "a" || results[i] == "A":
+			if i != len(results)-1 && strings.ContainsAny(string(results[i+1][0]), "aoueihAOUEIH") {
+				temp = append(temp, results[i]+"n")
+			} else {
+				temp = append(temp, results[i])
+			}
+		// if e == ",;:.?!" then add it to the end of the word before it
+		case results[i] == "," || results[i] == ";" || results[i] == ":" || results[i] == "." || results[i] == "?" || results[i] == "!":
+			temp[len(temp)-1] = temp[len(temp)-1] + results[i]
+
+		case results[i] == "'":
+			// if apostrophecount is 0 then add it to the beginning of the word after it
+			if apostrophecount == 0 {
+				results[i+1] = "'" + results[i+1]
+				apostrophecount++
+			} else {
+				// if apostrophecount is 1 then add it to the end of the word before it
+				temp[len(temp)-1] = temp[len(temp)-1] + results[i]
+				apostrophecount = 0
+			}
+		default:
+			temp = append(temp, results[i])
+		}
+	}
+	result := strings.Join(temp, " ")
+	//if theres a space in the end of the string then remove it
+	if result[len(result)-1:] == " " {
+		result = result[:len(result)-1]
+	}
+	return result
+
 }
 
 func Hex(s string) string {
