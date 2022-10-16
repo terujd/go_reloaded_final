@@ -27,4 +27,3 @@ Download repo to your computer
 ## Authors
 
 [Mijan]
-[Falusvampen]
